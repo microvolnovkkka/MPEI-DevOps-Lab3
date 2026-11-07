@@ -1,3 +1,6 @@
+# Отдельное имя не даёт одинаково названным форкам использовать общий volume.
+name: microvolnovkkka-lab3
+
 services:
   frontend:
     image: nginx:stable-alpine
@@ -43,7 +46,14 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      # Проверяем настоящий вход с паролем через Docker-сеть, не локальный trust.
+      # pg_isready может вернуть успех даже при неверном пользователе/пароле.
+      test:
+        - CMD-SHELL
+        - >-
+          PGPASSWORD="$$POSTGRES_PASSWORD" PGCONNECT_TIMEOUT=3
+          psql -h db -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"
+          -w -v ON_ERROR_STOP=1 -tAc 'SELECT 1' >/dev/null
       interval: 5s
       timeout: 5s
       retries: 20
