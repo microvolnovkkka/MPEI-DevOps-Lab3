@@ -20,10 +20,8 @@ services:
     restart: unless-stopped
 
   backend:
-    # Код и Dockerfile преподавателя; фиксируем коммит для повторяемой сборки.
-    # Сборка на месте поддерживает ARM, в отличие от опубликованного amd64-образа.
-    build:
-      context: https://github.com/nelkor/moscow-events.git#157c5c86a7d2878adf5caccd742bb118e82f4482
+    # Исходники и оригинальный Dockerfile преподавателя лежат в нашем репозитории.
+    build: ./backend
     environment:
       PG_HOST: db
       PG_PORT: "5432"
