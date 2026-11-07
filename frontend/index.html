@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Выберите московские события, настройте столбцы и скачайте свою подборку в CSV.">
+  <title>Московские события — экспорт в CSV</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#events-heading">К списку событий</a>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="Московские события — главная">
+      <span class="brand-mark" aria-hidden="true">м.</span>
+      <span>московские<span class="brand-second">события</span></span>
+    </a>
+    <span class="topbar-label">КАТАЛОГ / ЭКСПОРТ</span>
+    <span id="connection" class="connection"><span class="dot"></span><span id="connection-text">Подключение…</span></span>
+  </header>
+
+  <main class="page">
+    <div class="intro">
+      <div>
+        <p class="eyebrow">ВАША ПОДБОРКА, ВАШ ФОРМАТ</p>
+        <h1>События в одном файле<span class="accent">.</span></h1>
+        <p class="intro-text">Выберите мероприятия, настройте столбцы и заберите готовую таблицу.</p>
+      </div>
+      <div class="format-stamp" aria-hidden="true"><span>↓</span> CSV<span class="stamp-small">ГОТОВ К ВЫГРУЗКЕ</span></div>
+    </div>
+
+    <noscript><p class="error-banner">Для загрузки событий и выгрузки CSV включите JavaScript в браузере.</p></noscript>
+    <div id="error-banner" class="error-banner" role="alert" hidden>
+      <span id="error-message"></span><button id="retry" type="button" class="button small">Повторить</button>
+    </div>
+
+    <div class="workspace">
+      <section class="panel events-panel" aria-labelledby="events-heading">
+        <div class="panel-heading">
+          <div class="section-title"><span class="step">01</span><h2 id="events-heading">Выберите события</h2></div>
+          <span id="result-count" class="muted">Загрузка…</span>
+        </div>
+
+        <form id="filters" class="filters" role="search">
+          <div class="search-row">
+            <label class="search-field"><span class="visually-hidden">Поиск по названию и описанию</span>
+              <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg>
+              <input id="query" name="q" type="search" maxlength="250" placeholder="Название или описание события" autocomplete="off">
+            </label>
+            <button type="submit" class="button">Найти</button>
+          </div>
+          <div class="filter-row">
+            <label><span>Категория</span><select id="genre" name="genre_code"><option value="">Все категории</option></select></label>
+            <label><span>Статус</span><select id="status" name="status">
+              <option value="">Все статусы</option><option value="published">Опубликовано</option>
+              <option value="draft">Черновик</option><option value="cancelled">Отменено</option><option value="archived">В архиве</option>
+            </select></label>
+            <label><span>Сортировка</span><select id="sort" name="sort">
+              <option value="starts_at">Сначала ранние</option><option value="-starts_at">Сначала поздние</option>
+              <option value="title">По названию</option><option value="price_rub">Сначала дешевле</option><option value="-price_rub">Сначала дороже</option>
+            </select></label>
+            <button id="reset-filters" type="button" class="text-button reset-filters">Сбросить</button>
+          </div>
+        </form>
+
+        <div class="list-toolbar">
+          <div class="view-switch" aria-label="Режим списка">
+            <button id="all-view" type="button" aria-pressed="true">Все события</button>
+            <button id="selected-view" type="button" aria-pressed="false">Выбранные <span id="selected-badge">0</span></button>
+          </div>
+          <button id="clear-selection" type="button" class="text-button" disabled>Снять выбор</button>
+        </div>
+
+        <div id="events-scroll" class="table-scroll" tabindex="0" role="region" aria-label="Таблица событий, прокручивается по горизонтали">
+          <table class="events-table">
+            <thead><tr>
+              <th class="check-cell"><input id="select-page" type="checkbox" aria-label="Выбрать все события на этой странице" disabled></th>
+              <th scope="col">Событие</th><th scope="col">Дата · МСК</th><th scope="col">Цена</th><th scope="col">Статус</th>
+            </tr></thead>
+            <tbody id="events-body"><tr><td colspan="5" class="empty-state">Загружаем события…</td></tr></tbody>
+          </table>
+        </div>
+        <div class="pagination">
+          <label class="page-size-label">На странице <select id="page-size"><option>10</option><option>25</option><option>50</option><option>100</option></select></label>
+          <span id="page-info" class="muted">—</span>
+          <div class="page-controls"><button id="prev-page" class="button small" type="button" disabled aria-label="Предыдущая страница">←</button><button id="next-page" class="button small" type="button" disabled aria-label="Следующая страница">→</button></div>
+        </div>
+        <p class="selection-note">Выбор сохраняется между страницами и при изменении фильтров.</p>
+      </section>
+
+      <aside class="panel export-panel" aria-labelledby="columns-heading">
+        <div class="panel-heading"><div class="section-title"><span class="step">02</span><h2 id="columns-heading">Настройте файл</h2></div></div>
+        <div class="export-content">
+          <div class="columns-heading"><h3>Столбцы <span id="column-count" class="count-label">6</span></h3><button id="reset-columns" type="button" class="text-button">По умолчанию</button></div>
+          <p class="muted column-hint">Стрелки меняют порядок. Снимите галочку, чтобы убрать столбец.</p>
+          <div id="selected-columns" class="column-list"></div>
+          <details id="more-columns" class="more-columns"><summary>Добавить столбцы <span id="available-count"></span></summary><div id="available-columns" class="available-columns"></div></details>
+
+          <div class="file-options">
+            <label class="option-label" for="delimiter">Разделитель</label>
+            <select id="delimiter"><option value=";">Точка с запятой ;</option><option value=",">Запятая ,</option></select>
+            <label class="checkbox-label"><input id="include-header" type="checkbox" checked>Добавить строку заголовков</label>
+          </div>
+          <div class="export-summary"><div><strong id="export-count">0</strong><span>событий в файле</span></div><span class="file-tag">.CSV</span></div>
+          <button id="download" type="button" class="download-button" disabled><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 15v5h16v-5"/></svg>Скачать CSV</button>
+          <p id="export-hint" class="export-hint">Сначала выберите хотя бы одно событие.</p>
+          <p class="encoding-note">UTF-8 · Подходит для Excel и LibreOffice</p>
+        </div>
+      </aside>
+    </div>
+
+    <section class="panel preview-panel" aria-labelledby="preview-heading">
+      <div class="panel-heading"><div class="section-title"><span class="step">03</span><h2 id="preview-heading">Предпросмотр файла</h2></div><span id="preview-caption" class="muted">Первые 3 выбранных события</span></div>
+      <div id="preview-empty" class="preview-empty"><span class="preview-icon" aria-hidden="true">▤</span><p>Здесь появится ваша таблица</p><span>Отметьте события — и проверьте результат перед скачиванием.</span></div>
+      <div id="preview-scroll" class="table-scroll" tabindex="0" role="region" aria-label="Предпросмотр CSV, прокручивается по горизонтали" hidden><table id="preview-table" class="preview-table"></table></div>
+      <div class="preview-footer"><span>Строки идут в порядке выбора событий.</span><span>Даты в файле: ISO 8601, с часовым поясом.</span></div>
+    </section>
+    <p id="announcement" class="announcement" role="status" aria-live="polite"></p>
+  </main>
+  <footer class="page-footer"><span>московские события</span><span>Выбирайте главное. Остальное — в таблицу.</span></footer>
+</body>
+</html>
