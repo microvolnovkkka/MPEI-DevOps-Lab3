@@ -1,7 +1,35 @@
-# Отдельное имя не даёт одинаково названным форкам использовать общий volume.
 name: microvolnovkkka-lab3
 
 services:
+  db:
+    build: ./docker/postgis
+    environment:
+      POSTGRES_DB: moscow_events
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-lab3-local-password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: >-
+        PGPASSWORD="$$POSTGRES_PASSWORD" psql -w -h db
+        -U "$$POSTGRES_USER" -d "$$POSTGRES_DB" -c 'SELECT 1'
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  backend:
+    build: ./backend
+    environment:
+      PG_HOST: db
+      PG_DB_NAME: moscow_events
+      PG_USER_NAME: postgres
+      PG_USER_PASSWORD: ${DB_PASSWORD:-lab3-local-password}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
   frontend:
     image: nginx:stable-alpine
     ports:
@@ -12,50 +40,6 @@ services:
     depends_on:
       backend:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/"]
-      interval: 10s
-      timeout: 3s
-      retries: 3
-    restart: unless-stopped
-
-  backend:
-    # Исходники и оригинальный Dockerfile преподавателя лежат в нашем репозитории.
-    build: ./backend
-    environment:
-      PG_HOST: db
-      PG_PORT: "5432"
-      PG_DB_NAME: moscow_events
-      PG_USER_NAME: postgres
-      PG_USER_PASSWORD: ${DB_PASSWORD:-lab3-local-password}
-      SEED_MODE: sample
-    depends_on:
-      db:
-        condition: service_healthy
-    # HEALTHCHECK /health/ready уже задан в Dockerfile backend.
-    restart: unless-stopped
-
-  db:
-    build: ./docker/postgis
-    environment:
-      POSTGRES_DB: moscow_events
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-lab3-local-password}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      # Проверяем настоящий вход с паролем через Docker-сеть, не локальный trust.
-      # pg_isready может вернуть успех даже при неверном пользователе/пароле.
-      test:
-        - CMD-SHELL
-        - >-
-          PGPASSWORD="$$POSTGRES_PASSWORD" PGCONNECT_TIMEOUT=3
-          psql -h db -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"
-          -w -v ON_ERROR_STOP=1 -tAc 'SELECT 1' >/dev/null
-      interval: 5s
-      timeout: 5s
-      retries: 20
-      start_period: 15s
     restart: unless-stopped
 
 volumes:
