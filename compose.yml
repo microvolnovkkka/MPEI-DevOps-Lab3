@@ -19,7 +19,7 @@ services:
     restart: unless-stopped
 
   backend:
-    build: ./backend
+    image: ghcr.io/nelkor/moscow-events
     environment:
       PG_HOST: db
       PG_DB_NAME: moscow_events
