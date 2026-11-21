@@ -20,6 +20,7 @@ services:
 
   backend:
     image: ghcr.io/nelkor/moscow-events
+    platform: linux/amd64
     environment:
       PG_HOST: db
       PG_DB_NAME: moscow_events

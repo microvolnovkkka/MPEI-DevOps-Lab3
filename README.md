@@ -12,7 +12,9 @@ cd MPEI-DevOps-Lab3
 docker compose up -d
 ```
 
-Откройте [localhost:8082](http://localhost:8082) на компьютере с Docker или `http://IP_СЕРВЕРА:8082` с другого устройства в той же сети. При первом запуске PostgreSQL с PostGIS и Python API собираются из этого репозитория, а API добавляет в пустую базу примеры событий.
+Откройте [localhost:8082](http://localhost:8082) на компьютере с Docker или `http://IP_СЕРВЕРА:8082` с другого устройства в той же сети. Compose собирает PostgreSQL с PostGIS и скачивает готовый образ API `ghcr.io/nelkor/moscow-events`. При первом запуске API добавляет в пустую базу примеры событий.
+
+Образ API опубликован для `linux/amd64`. На Mac с Apple Silicon Docker Desktop запускает его через эмуляцию. Для запуска на Ubuntu ARM64 также нужна поддержка эмуляции amd64.
 
 По умолчанию файл `.env` не нужен. Если порт 8082 занят, создайте рядом с `compose.yml` файл `.env` со строкой `HTTP_PORT=8083`, повторите `docker compose up -d` и откройте порт 8083.
 
